@@ -27,7 +27,7 @@ struct Bullet {
     BlockColor color;
 };
 
-//【新增】技能状态枚举
+//技能状态枚举
 enum ActiveSkill { Skill_None, Skill_Bomb, Skill_Laser, Skill_Hammer };
 
 #endif // GAMEDEFINES_H

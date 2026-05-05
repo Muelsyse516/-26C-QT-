@@ -8,15 +8,15 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    //设置窗口固定大小为1280x720(16:9)
+    //设置窗口固定大小1280x720
     setFixedSize(windowWidth,windowHeight);
     setWindowTitle("POPUCOM");
 
-    //计算战斗区域(网格)居中的起始坐标
+    //计算战斗区域起始坐标
     battleAreaStartX=sidePanelWidth+(windowWidth-2*sidePanelWidth-gridCols*cellSize)/2;
     battleAreaStartY=topBeltHeight+80;
 
-    //初始化网格为空(-1)
+    //初始化网格为空
     for(int r=0;r<gridRows;++r) {
         for(int c=0;c<gridCols;++c) {
             battleGrid[r][c]=-1;
@@ -28,14 +28,14 @@ MainWindow::MainWindow(QWidget *parent)
     spawnTimer=0;
     enemySpawnTimer=0; 
     
-    //【修改】初始化分数与时间(存活时长从0开始)
+    //初始化分数与时间
     score=0;
     gameTime=0;
     frameCount=0;
     isGameOver=false; 
-    isPaused=false; //【新增】初始不暂停
+    isPaused=false; //初始不暂停
 
-    //【新增】初始化道具状态
+    //初始化道具状态
     isDraggingSkill = false;
     draggedSkill = Skill_None;
     hammerCooldown = 0;
@@ -60,22 +60,22 @@ MainWindow::~MainWindow()
 
 void MainWindow::updateGame()
 {
-    //【新增】冷却时间减少
+    //冷却时间减少
     if(hammerCooldown > 0) hammerCooldown--;
     if(bombCooldown > 0) bombCooldown--;
     if(laserCooldown > 0) laserCooldown--;
 
-    // 如果游戏已经结束，或者【新增】处于暂停状态，就不再更新任何逻辑
+    // 如果游戏已经结束，或者处于暂停状态，就不再更新任何逻辑
     if(isGameOver || isPaused) return;
 
-    //【修改】更新存活时间(正向计时)
+    //存活时间
     frameCount++;
     if(frameCount>=62){
         frameCount=0;
         gameTime++; // 存活秒数+1
     }
 
-    //1.让传送带上的方块组整体向右移动(【回调】速度从4.0降回2.0)
+    //1.让传送带上的方块组整体向右移动
     for(int i=0;i<conveyorBlocks.size();++i){
         conveyorBlocks[i].x+=2.0; 
     }
@@ -89,7 +89,7 @@ void MainWindow::updateGame()
         conveyorBlocks.removeFirst();
     }
 
-    //3.控制生成频率(【回调】生成间隔延长到120帧，约2秒)
+    //3.控制生成频率
     spawnTimer++;
     if(spawnTimer>=120){
         spawnBlockGroup();
@@ -110,7 +110,7 @@ void MainWindow::updateGame()
     for(int i=0;i<enemies.size();++i){
         enemies[i]->move(); //触发多态
     }
-    //【修改】如果敌人走到网格的最左侧(也就是到达战斗区域的左边界)，触发游戏失败
+    //6.游戏失败
     for(int i=enemies.size()-1;i>=0;--i){
         if(enemies[i]->x <= battleAreaStartX){
             isGameOver = true; // 游戏结束
@@ -119,20 +119,17 @@ void MainWindow::updateGame()
         }
     }
     
-    //【修改】怪物生成逻辑: 修改概率与修复Y坐标生成位置
+    //7.怪物生成逻辑: 修改概率与修复Y坐标生成位置
     enemySpawnTimer++;
     if(enemySpawnTimer>150){ //每隔约2.5秒生成一个敌人
         enemySpawnTimer=0;
-        
         //随机在0到5行之间生成
         int spawnRow=QRandomGenerator::global()->bounded(gridRows);
-        //X坐标从战斗网格最右侧边缘生成
+        //X坐标
         double startX = battleAreaStartX + gridCols * cellSize;
-        
-        //精确计算Y坐标：网格起始Y + 当前行数*格子高度 + 居中偏移(格子高度60 - 怪物高度40)/2
+        //Y坐标
         double startY=battleAreaStartY + spawnRow*cellSize + 10.0; 
-        
-        //【修改】精确控制生成概率
+        //生成概率
         int randType = QRandomGenerator::global()->bounded(100);
         if(randType < 70) {
             enemies.append(new NormalEnemy(startX,startY)); //70%普通
@@ -145,7 +142,7 @@ void MainWindow::updateGame()
         }
     }
 
-    //6.处理子弹与敌人的碰撞检测
+    //8.处理子弹与敌人的碰撞检测
     for(int i=bullets.size()-1;i>=0;--i){
         bool hit=false;
         for(int j=enemies.size()-1;j>=0;--j){
@@ -172,7 +169,7 @@ void MainWindow::updateGame()
     update();
 }
 
-//【修改】检测并处理同色直线三消(已删除了旧的dfs算法)
+//9.检测并处理同色直线三消
 void MainWindow::checkMatch()
 {
     //使用一个二维布尔数组记录哪些方块将被消除
@@ -239,7 +236,7 @@ void MainWindow::checkMatch()
         for(int r=0;r<gridRows;++r) {
             for(int c=0;c<gridCols;++c) {
                 if(toRemove[r][c]) {
-                    //【修改】每个被消除的方块都生成一颗子弹
+                    //每个被消除的方块都生成一颗子弹
                     Bullet bullet;
                     //子弹起始坐标就在这个方块的中心
                     bullet.x=battleAreaStartX+c*cellSize+cellSize/2.0;
@@ -262,30 +259,24 @@ void MainWindow::spawnBlockGroup()
     BlockGroup group;
     //初始位置:从屏幕最左侧外开始生成
     group.x=-200;
-
     //获取随机数(0-99)来决定形状和颜色策略,处理概率
     int shapeRand=QRandomGenerator::global()->bounded(100);
     int colorPolicyRand=QRandomGenerator::global()->bounded(100);
-
     //30%概率同色,70%概率随机色
     bool isSameColor=(colorPolicyRand<30);
     //如果判定为同色,则先随机确定这组方块的主颜色
     BlockColor mainColor=static_cast<BlockColor>(QRandomGenerator::global()->bounded(4));
-
     //使用Lambda表达式来方便地获取颜色
     auto getColor=[&]()->BlockColor{
         if(isSameColor) return mainColor; //如果是同色策略,直接返回主颜色
         //如果是随机色策略,每个方块独立随机生成一种颜色
         return static_cast<BlockColor>(QRandomGenerator::global()->bounded(4));
     };
-
-    //根据你的要求分配形状的概率
     if(shapeRand<25){
         //25%概率(0-24):单独的一个方块
         group.blocks.append({0,0,getColor()});
     }else if(shapeRand<55){
         //30%概率(25-54):两个方块相连
-        //细分为50%横向,50%竖向
         if(QRandomGenerator::global()->bounded(100)<50){
             group.blocks.append({0,0,getColor()});
             group.blocks.append({1,0,getColor()}); //横向
@@ -295,26 +286,25 @@ void MainWindow::spawnBlockGroup()
         }
     }else if(shapeRand<90){
         //35%概率(55-89):三个方块成直角(L型)
-        //进一步细分,50%概率正L,50%概率反L(手性异构)
+        //50%概率正L,50%概率反L(手性异构)
         if(QRandomGenerator::global()->bounded(100)<50){
             //正L型
-            group.blocks.append({0,0,getColor()}); //原点
-            group.blocks.append({1,0,getColor()}); //右边一个
-            group.blocks.append({0,1,getColor()}); //下边一个
+            group.blocks.append({0,0,getColor()});
+            group.blocks.append({1,0,getColor()});
+            group.blocks.append({0,1,getColor()});
         }else{
-            //反L型(镜像)
-            group.blocks.append({0,0,getColor()}); //原点
-            group.blocks.append({1,0,getColor()}); //右边一个
-            group.blocks.append({0,-1,getColor()}); //上边一个
+            //反L型
+            group.blocks.append({0,0,getColor()});
+            group.blocks.append({1,0,getColor()});
+            group.blocks.append({0,-1,getColor()});
         }
     }else{
         //10%概率(90-99):三个方块成一条直线
-        group.blocks.append({0,0,getColor()}); //原点
-        group.blocks.append({1,0,getColor()}); //右边第一个
-        group.blocks.append({2,0,getColor()}); //右边第二个
+        group.blocks.append({0,0,getColor()});
+        group.blocks.append({1,0,getColor()});
+        group.blocks.append({2,0,getColor()});
     }
-
-    //动态计算完美居中的初始Y坐标
+    //动态计算居中的初始Y坐标
     int minRy=0;
     int maxRy=0;
     if(!group.blocks.isEmpty()) {
@@ -325,29 +315,26 @@ void MainWindow::spawnBlockGroup()
             if(b.ry>maxRy) maxRy=b.ry;
         }
     }
-    //居中公式:传送带高度一半(75)-形状自身占用高度的中心偏移
+    //传送带高度一半(75)-形状自身占用高度的中心偏移
     group.y=75-(minRy+maxRy+1)*(cellSize/2);
-
     //将生成好的方块组加入到传送带列表中
     conveyorBlocks.append(group);
 }
 
-//鼠标按下事件:判断是否点中了传送带上的方块,以及处理拖拽时的右键旋转
+//鼠标按下事件
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
     if(isGameOver) return;
 
-    //检查是否点击了暂停按钮
+    //暂停按钮
     QRect pauseRect(width()/2 - 60, height() - 50, 120, 40);
     if(event->button() == Qt::LeftButton && pauseRect.contains(event->pos())) {
         isPaused = !isPaused;
         update();
         return;
     }
-
     if(isPaused) return; // 暂停时禁止其他操作
-
-    //【新增】检查是否点击了道具按钮 (改为拖拽逻辑)
+    //道具按钮
     QRect hammerRect(40, topBeltHeight + 100, sidePanelWidth - 80, 45);
     QRect bombRect(40, topBeltHeight + 160, sidePanelWidth - 80, 45);
     QRect laserRect(40, topBeltHeight + 220, sidePanelWidth - 80, 45);
@@ -379,7 +366,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     //如果当前正在拖拽方块,且按下了鼠标右键,则进行顺时针旋转90度
     if(isDragging&&event->button()==Qt::RightButton) {
         for(int i=0;i<draggedGroup.blocks.size();++i) {
-            //顺时针旋转90度的坐标变换公式:新x=-旧y,新y=旧x
+            //新x=-旧y,新y=旧x
             int oldRx=draggedGroup.blocks[i].rx;
             int oldRy=draggedGroup.blocks[i].ry;
             draggedGroup.blocks[i].rx=-oldRy;
@@ -390,7 +377,6 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
 
     if(event->button()==Qt::LeftButton) {
-        //从后往前遍历,确保先抓取视觉上最上层的方块
         for(int i=conveyorBlocks.size()-1;i>=0;--i) {
             BlockGroup group=conveyorBlocks[i];
             bool hit=false;
@@ -420,7 +406,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
 }
 
-//鼠标移动事件:更新被拖拽方块的坐标
+//鼠标移动事件
 void MainWindow::mouseMoveEvent(QMouseEvent *event)
 {
     if(isDraggingSkill) {
@@ -435,13 +421,13 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-//鼠标松开事件:计算网格吸附与放置逻辑
+//鼠标松开事件
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
     if(event->button() == Qt::LeftButton && isDraggingSkill) {
         isDraggingSkill = false;
         
-        // 判断是否落入战斗网格
+        // 判断是否落入网格
         if(event->pos().x() >= battleAreaStartX && event->pos().x() < battleAreaStartX + gridCols * cellSize &&
            event->pos().y() >= battleAreaStartY && event->pos().y() < battleAreaStartY + gridRows * cellSize) {
             
@@ -525,36 +511,32 @@ void MainWindow::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    //0.绘制全局背景底色
+    //1.绘制全局背景底色
     painter.fillRect(0,0,width(),height(),QColor(245,235,215));
 
-    //【修改】统一调小字体并加粗，让整体更和谐
     QFont mainFont = painter.font();
     mainFont.setPointSize(10);
     mainFont.setBold(true);
     painter.setFont(mainFont);
 
-    //1.绘制上方传送带区域
+    //2.绘制上方传送带区域
     painter.fillRect(0,0,width(),topBeltHeight,QColor(220,240,235));
     painter.setPen(QPen(QColor(100,100,100),2));
     painter.drawLine(0,topBeltHeight,width(),topBeltHeight);
 
-    //2.绘制左侧道具区边框
+    //3.绘制左侧道具区边框
     painter.setPen(QPen(QColor(80,80,80),2,Qt::DashLine));
     painter.setBrush(QColor(235,225,205));
     painter.drawRoundedRect(20,topBeltHeight+50,sidePanelWidth-40,height()-topBeltHeight-100,10,10);
-    
-    //【新增】统一设置面板标题的大号字体
+
     QFont panelFont = mainFont;
     panelFont.setPointSize(16);
     painter.setFont(panelFont);
     painter.setPen(Qt::black);
     painter.drawText(QRect(20,topBeltHeight+60,sidePanelWidth-40,30),Qt::AlignCenter,"skill");
-
-    //恢复普通字体绘制按钮
     painter.setFont(mainFont);
 
-    //【新增】绘制锤子按钮
+    //绘制锤子按钮
     QRect hammerRect(40, topBeltHeight + 100, sidePanelWidth - 80, 45);
     painter.setPen(QPen(Qt::black, 2));
     painter.setBrush(hammerCooldown > 0 ? QColor(180,180,180) : QColor(200,150,100));
@@ -562,7 +544,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.setPen(Qt::white);
     painter.drawText(hammerRect, Qt::AlignCenter, hammerCooldown > 0 ? QString("锤子冷却: %1s").arg(hammerCooldown/62 + 1) : "🔨 锤子(单体)");
 
-    //【新增】绘制炸弹按钮
+    //绘制炸弹按钮
     QRect bombRect(40, topBeltHeight + 160, sidePanelWidth - 80, 45);
     painter.setPen(QPen(Qt::black, 2));
     painter.setBrush(bombCooldown > 0 ? QColor(180,180,180) : QColor(250,100,100));
@@ -570,7 +552,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.setPen(Qt::white);
     painter.drawText(bombRect, Qt::AlignCenter, bombCooldown > 0 ? QString("炸弹冷却: %1s").arg(bombCooldown/62 + 1) : "💣 炸弹(3x3)");
 
-    //【新增】绘制激光按钮
+    //绘制激光按钮
     QRect laserRect(40, topBeltHeight + 220, sidePanelWidth - 80, 45);
     painter.setPen(QPen(Qt::black, 2));
     painter.setBrush(laserCooldown > 0 ? QColor(180,180,180) : QColor(100,150,250));
@@ -578,43 +560,37 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.setPen(Qt::white);
     painter.drawText(laserRect, Qt::AlignCenter, laserCooldown > 0 ? QString("激光冷却: %1s").arg(laserCooldown/62 + 1) : "⚡ 激光(一行)");
 
-    //3.绘制右侧计分板与时间区边框
+    //4.绘制右侧计分板与时间区边框
     painter.setPen(QPen(QColor(80,80,80),2,Qt::DashLine));
     painter.setBrush(QColor(235,225,205)); //【修改】使用与左侧相同的背景色
     painter.drawRoundedRect(width()-sidePanelWidth+20,topBeltHeight+50,sidePanelWidth-40,height()-topBeltHeight-100,10,10);
     
-    //【新增】统一设置面板标题的大号字体
+    //设置面板标题的大号字体
     painter.setFont(panelFont);
     painter.setPen(Qt::black);
     painter.drawText(QRect(width()-sidePanelWidth+20,topBeltHeight+60,sidePanelWidth-40,40),Qt::AlignCenter,"status");
 
-    // 绘制分数 (使用相同的大号字体)
+    //绘制分数
     painter.setPen(QColor(50, 100, 200));
     painter.drawText(QRect(width()-sidePanelWidth+20, topBeltHeight+130, sidePanelWidth-40, 50), Qt::AlignCenter, QString("score"));
-    
-    // 恢复普通字体绘制数字
     painter.setFont(mainFont);
     painter.setPen(QColor(50, 50, 50));
     painter.drawText(QRect(width()-sidePanelWidth+20, topBeltHeight+180, sidePanelWidth-40, 50), Qt::AlignCenter, QString::number(score));
 
-    // 绘制存活时间 (使用相同的大号字体)
+    //绘制存活时间
     painter.setFont(panelFont);
     painter.setPen(QColor(50, 100, 200));
     painter.drawText(QRect(width()-sidePanelWidth+20, topBeltHeight+280, sidePanelWidth-40, 50), Qt::AlignCenter, QString("survive"));
-    
-    // 恢复普通字体绘制时间数字
     int min = gameTime / 60;
     int sec = gameTime % 60;
     painter.setFont(mainFont);
     painter.setPen(Qt::black);
     painter.drawText(QRect(width()-sidePanelWidth+20, topBeltHeight+330, sidePanelWidth-40, 50), Qt::AlignCenter, QString("%1:%2").arg(min, 2, 10, QChar('0')).arg(sec, 2, 10, QChar('0')));
-
-    //恢复字体
     mainFont.setPointSize(9);
     mainFont.setBold(false);
     painter.setFont(mainFont);
 
-    //【新增】绘制暂停按钮 (画面正下方)
+    //绘制暂停按钮
     QRect pauseRect(width()/2 - 60, height() - 50, 120, 40);
     painter.setBrush(isPaused ? QColor(100,200,100) : QColor(200,100,100));
     painter.setPen(QPen(Qt::black, 2));
@@ -622,11 +598,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.setPen(Qt::white);
     painter.drawText(pauseRect, Qt::AlignCenter, isPaused ? "▶ 继续 (RESUME)" : "⏸ 暂停 (PAUSE)");
 
-    //4.绘制中间核心战斗区域(12x6网格)
+    //5.绘制中间核心区域
     painter.setPen(QPen(QColor(50,50,50),3));
     painter.setBrush(QColor(250,245,230));
     painter.drawRect(battleAreaStartX,battleAreaStartY,gridCols*cellSize,gridRows*cellSize);
-
     //绘制内部网格线
     painter.setPen(QPen(QColor(200,200,200),1));
     for(int row=0;row<=gridRows;++row) {
@@ -664,7 +639,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
     }
 
-    //5.绘制传送带上的方块组
+    //6.绘制传送带上的方块组
     for(const BlockGroup &group:conveyorBlocks){
         for(const Block &b:group.blocks){
             //计算每个小方块的绝对坐标
@@ -686,7 +661,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
     }
 
-    //绘制正在被鼠标拖拽的方块组(必须画在最上层所以放在最后)
+    //绘制正在被鼠标拖拽的方块组
     if(isDragging) {
         for(const Block &b:draggedGroup.blocks){
             double drawX=draggedGroup.x+b.rx*cellSize;
@@ -720,12 +695,12 @@ void MainWindow::paintEvent(QPaintEvent *event)
         painter.drawEllipse(bullet.x,bullet.y,15,15); //子弹是一个15x15的圆形
     }
 
-    //绘制敌人(利用多态,直接调用虚函数)
+    //绘制敌人(直接调用虚函数)
     for(Enemy* enemy:enemies){
         enemy->draw(painter);
     }
 
-    //【新增】绘制正在拖拽的道具
+    //绘制正在拖拽的道具
     if(isDraggingSkill && draggedSkill != Skill_None) {
         QRect dragRect(skillDragPos.x() - 20, skillDragPos.y() - 20, 40, 40);
         if(draggedSkill == Skill_Hammer) {
@@ -749,14 +724,14 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
     }
 
-    //【新增】如果游戏结束，在屏幕中央绘制半透明黑色遮罩和白色失败文字
+    //如果游戏结束，在屏幕中央绘制半透明黑色遮罩和白色失败文字
     if(isGameOver){
         painter.fillRect(0, 0, width(), height(), QColor(0, 0, 0, 150));
         QFont overFont = mainFont;
-        overFont.setPointSize(40); // 改小一点，原本是80
+        overFont.setPointSize(40);
         overFont.setBold(true);
         painter.setFont(overFont);
-        painter.setPen(Qt::white); // 换成白色
+        painter.setPen(Qt::white);
         painter.drawText(QRect(0, 0, width(), height()), Qt::AlignCenter, "game over");
     }
 }

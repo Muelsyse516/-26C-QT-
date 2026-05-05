@@ -4,7 +4,7 @@
 #include <QPainter>
 #include "gamedefines.h"
 
-//利用C++多态设计敌人基类
+//敌人基类
 class Enemy {
 public:
     double x;
@@ -12,7 +12,7 @@ public:
     int hp;
     int maxHp;
     double speed;
-    int scoreValue; // 【新增】击杀得分
+    int scoreValue;
 
     Enemy(double startX,double startY,int h,double s,int score) : x(startX),y(startY),hp(h),maxHp(h),speed(s),scoreValue(score) {}
     virtual ~Enemy() {}

@@ -4,8 +4,8 @@
 void NormalEnemy::draw(QPainter &painter) {
     painter.setBrush(QColor(150,150,150));
     painter.setPen(QPen(Qt::black,2));
-    painter.drawRect(x,y,40,40); 
-    //画血条(显示在下方)
+    painter.drawRect(x,y,40,40);
+    //血条
     painter.setBrush(Qt::red);
     painter.setPen(Qt::NoPen);
     painter.drawRect(x, y + 45, 40*hp/maxHp, 5);
@@ -16,7 +16,7 @@ void HeavyEnemy::draw(QPainter &painter) {
     painter.setBrush(QColor(50,50,150));
     painter.setPen(QPen(Qt::black,2));
     painter.drawRect(x,y-5,50,50); 
-    //画血条(显示在下方)
+    //血条
     painter.setBrush(Qt::red);
     painter.setPen(Qt::NoPen);
     painter.drawRect(x, y + 50, 50*hp/maxHp, 5);
@@ -27,7 +27,7 @@ void FastEnemy::draw(QPainter &painter) {
     painter.setBrush(QColor(250,150,50));
     painter.setPen(QPen(Qt::black,2));
     painter.drawEllipse(x+5,y+5,30,30); 
-    //画血条(显示在下方)
+    //血条
     painter.setBrush(Qt::red);
     painter.setPen(Qt::NoPen);
     painter.drawRect(x, y + 40, 40*hp/maxHp, 5);
@@ -38,7 +38,7 @@ void EliteEnemy::draw(QPainter &painter) {
     painter.setBrush(QColor(150,50,200));
     painter.setPen(QPen(Qt::black,2));
     painter.drawEllipse(x,y,45,45); 
-    //画血条(显示在下方)
+    //血条
     painter.setBrush(Qt::red);
     painter.setPen(Qt::NoPen);
     painter.drawRect(x, y + 50, 45*hp/maxHp, 5);

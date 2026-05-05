@@ -69,26 +69,23 @@ private:
     QList<Enemy*> enemies; //场上的敌人(使用指针以支持多态)
     int enemySpawnTimer; //敌人生成计时器
 
-    //【新增】计分与时间
+    //计分与时间
     int score;
-    int gameTime; //存活时间(秒)
+    int gameTime; //存活时间
     int frameCount; //用于计时的帧计数器
     bool isGameOver; //游戏是否结束标志
-    bool isPaused; //【新增】是否暂停
+    bool isPaused; //是否暂停
 
     //【新增】道具与系统控制
     bool isDraggingSkill;
     ActiveSkill draggedSkill;
     QPoint skillDragPos;
-    int hammerCooldown; //锤子冷却(帧)
-    int bombCooldown; //炸弹冷却(帧)
-    int laserCooldown; //激光冷却(帧)
-
+    int hammerCooldown; //锤子冷却
+    int bombCooldown; //炸弹冷却
+    int laserCooldown; //激光冷却
     //私有函数
     void updateGame(); //定时器触发的逻辑更新函数
     void spawnBlockGroup(); //生成新的方块组
-
-    //三消与战斗逻辑函数
     void checkMatch(); //检测并处理同色直线三消
 };
 #endif // MAINWINDOW_H
