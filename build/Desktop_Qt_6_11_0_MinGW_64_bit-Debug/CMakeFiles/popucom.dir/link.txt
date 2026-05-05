@@ -1,3 +1,0 @@
-D:\Qt\Tools\CMake_64\bin\cmake.exe -E rm -f CMakeFiles\popucom.dir/objects.a
-D:\Qt\Tools\mingw1310_64\bin\ar.exe qc CMakeFiles\popucom.dir/objects.a @CMakeFiles\popucom.dir\objects1.rsp
-D:\Qt\Tools\mingw1310_64\bin\g++.exe -g -mwindows -Wl,--whole-archive CMakeFiles\popucom.dir/objects.a -Wl,--no-whole-archive -o popucom.exe -Wl,--out-implib,libpopucom.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\popucom.dir\linkLibs.rsp
