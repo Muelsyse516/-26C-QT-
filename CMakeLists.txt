@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.5)
 
 project(popucom VERSION 0.1 LANGUAGES CXX)
 
@@ -17,6 +17,8 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
+        enemy.cpp
+        enemy.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
