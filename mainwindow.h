@@ -7,30 +7,7 @@
 #include <QList>
 #include <QPoint>
 #include "enemy.h"
-
-//定义方块的四种颜色
-enum BlockColor { Color_Red, Color_Yellow, Color_Blue, Color_Green };
-
-//定义单个小方块
-struct Block {
-    int rx; //在方块组内的相对X网格坐标
-    int ry; //在方块组内的相对Y网格坐标
-    BlockColor color; //颜色
-};
-
-//定义在传送带上移动的方块组
-struct BlockGroup {
-    double x; //在屏幕上的绝对X坐标
-    double y; //在屏幕上的绝对Y坐标
-    QList<Block> blocks; //包含的小方块集合
-};
-
-//新增子弹结构体
-struct Bullet {
-    double x;
-    double y;
-    BlockColor color;
-};
+#include "gamedefines.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -91,6 +68,21 @@ private:
     QList<Bullet> bullets; //场上的子弹
     QList<Enemy*> enemies; //场上的敌人(使用指针以支持多态)
     int enemySpawnTimer; //敌人生成计时器
+
+    //【新增】计分与时间
+    int score;
+    int gameTime; //存活时间(秒)
+    int frameCount; //用于计时的帧计数器
+    bool isGameOver; //游戏是否结束标志
+    bool isPaused; //【新增】是否暂停
+
+    //【新增】道具与系统控制
+    bool isDraggingSkill;
+    ActiveSkill draggedSkill;
+    QPoint skillDragPos;
+    int hammerCooldown; //锤子冷却(帧)
+    int bombCooldown; //炸弹冷却(帧)
+    int laserCooldown; //激光冷却(帧)
 
     //私有函数
     void updateGame(); //定时器触发的逻辑更新函数

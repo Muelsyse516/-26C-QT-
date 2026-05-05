@@ -19,6 +19,7 @@ set(PROJECT_SOURCES
         mainwindow.ui
         enemy.cpp
         enemy.h
+        gamedefines.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
