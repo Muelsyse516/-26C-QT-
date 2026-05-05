@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-5e87e05a6d40d55c28e1.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "popucom",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "popucom::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-popucom-Debug-7e3ac75471f824800a52.json",
+					"name" : "popucom",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "popucom_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-popucom_autogen-Debug-a5cdfe5a98678f99e5a2.json",
+					"name" : "popucom_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "popucom_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-popucom_autogen_timestamp_deps-Debug-f2eaec6083694fe12368.json",
+					"name" : "popucom_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "D:/Qtproject/popucom/build/Desktop_Qt_6_11_0_MinGW_64_bit-Debug",
+		"source" : "D:/Qtproject/popucom"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}
