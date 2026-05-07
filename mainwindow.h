@@ -24,9 +24,9 @@ public:
     ~MainWindow();
 
 protected:
-    //重写绘图事件用于绘制场景基础UI和方块
+    //绘图事件用于绘制场景基础UI和方块
     void paintEvent(QPaintEvent *event) override;
-    //重写鼠标事件
+    //鼠标事件
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
@@ -41,9 +41,9 @@ private:
     const int gridRows = 6;  //场上可用网格的行数
     const int gridCols = 12; //场上可用网格的列数
     const int topBeltHeight = 150; //上方传送带高度
-    const int sidePanelWidth = 200; //两侧面板(道具区/计分板)的宽度
+    const int sidePanelWidth = 200; //两侧面板的宽度
 
-    //战斗区域(玩家网格)的起始坐标
+    //战斗区域的起始坐标
     int battleAreaStartX;
     int battleAreaStartY;
 
@@ -66,7 +66,7 @@ private:
 
     //战斗相关变量
     QList<Bullet> bullets; //场上的子弹
-    QList<Enemy*> enemies; //场上的敌人(使用指针以支持多态)
+    QList<Enemy*> enemies; //场上的敌人
     int enemySpawnTimer; //敌人生成计时器
 
     //计分与时间
@@ -74,18 +74,21 @@ private:
     int gameTime; //存活时间
     int frameCount; //用于计时的帧计数器
     bool isGameOver; //游戏是否结束标志
-    bool isPaused; //是否暂停
+    bool isPaused;   //是否暂停
+    bool isMenu;     //是否在主菜单界面
 
-    //【新增】道具与系统控制
+    //道具与系统控制
     bool isDraggingSkill;
     ActiveSkill draggedSkill;
     QPoint skillDragPos;
     int hammerCooldown; //锤子冷却
     int bombCooldown; //炸弹冷却
     int laserCooldown; //激光冷却
+    ActiveSkill currentSkill;
     //私有函数
     void updateGame(); //定时器触发的逻辑更新函数
     void spawnBlockGroup(); //生成新的方块组
     void checkMatch(); //检测并处理同色直线三消
+    void resetGame();  //重置游戏状态
 };
 #endif // MAINWINDOW_H

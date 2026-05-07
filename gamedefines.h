@@ -20,7 +20,7 @@ struct BlockGroup {
     QList<Block> blocks; //包含的小方块集合
 };
 
-//新增子弹结构体
+//子弹结构体
 struct Bullet {
     double x;
     double y;

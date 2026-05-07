@@ -34,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     frameCount=0;
     isGameOver=false; 
     isPaused=false; //初始不暂停
+    isMenu=true;    //初始进入主菜单
 
     //初始化道具状态
     isDraggingSkill = false;
@@ -51,11 +52,47 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    //释放敌人指针占用的内存,防止内存泄漏
+    //释放敌人指针占用的内存
     for(Enemy* e:enemies){
         delete e;
     }
     delete ui;
+}
+
+void MainWindow::resetGame()
+{
+    // 清空所有容器
+    conveyorBlocks.clear();
+    bullets.clear();
+    for(Enemy* e : enemies) {
+        delete e;
+    }
+    enemies.clear();
+
+    // 清空网格
+    for(int r=0;r<gridRows;++r) {
+        for(int c=0;c<gridCols;++c) {
+            battleGrid[r][c] = -1;
+        }
+    }
+
+    // 重置所有状态变量
+    score = 0;
+    gameTime = 0;
+    frameCount = 0;
+    spawnTimer = 0;
+    enemySpawnTimer = 0;
+    
+    hammerCooldown = 0;
+    bombCooldown = 0;
+    laserCooldown = 0;
+    currentSkill = Skill_None;
+    isDragging = false;
+    
+    isGameOver = false;
+    isPaused = false;
+    
+    update();
 }
 
 void MainWindow::updateGame()
@@ -65,8 +102,8 @@ void MainWindow::updateGame()
     if(bombCooldown > 0) bombCooldown--;
     if(laserCooldown > 0) laserCooldown--;
 
-    // 如果游戏已经结束，或者处于暂停状态，就不再更新任何逻辑
-    if(isGameOver || isPaused) return;
+    // 如果游戏已经结束，或者处于暂停状态，或者处于主菜单状态，就不再更新任何逻辑
+    if(isGameOver || isPaused || isMenu) return;
 
     //存活时间
     frameCount++;
@@ -108,7 +145,7 @@ void MainWindow::updateGame()
 
     //5.处理敌人移动与生成
     for(int i=0;i<enemies.size();++i){
-        enemies[i]->move(); //触发多态
+        enemies[i]->move();
     }
     //6.游戏失败
     for(int i=enemies.size()-1;i>=0;--i){
@@ -129,16 +166,16 @@ void MainWindow::updateGame()
         double startX = battleAreaStartX + gridCols * cellSize;
         //Y坐标
         double startY=battleAreaStartY + spawnRow*cellSize + 10.0; 
-        //生成概率
+        //怪物生成逻辑: 按照新设定的概率生成4种怪物之一
         int randType = QRandomGenerator::global()->bounded(100);
-        if(randType < 70) {
-            enemies.append(new NormalEnemy(startX,startY)); //70%普通
-        } else if(randType < 85) {
-            enemies.append(new HeavyEnemy(startX,startY));  //15%重装
-        } else if(randType < 95) {
-            enemies.append(new EliteEnemy(startX,startY));  //10%精英
+        if(randType < 55) {
+            enemies.append(new NormalEnemy(startX,startY)); //55%普通
+        } else if(randType < 80) {
+            enemies.append(new EliteEnemy(startX,startY));  //25%精英
+        } else if(randType < 90) {
+            enemies.append(new HeavyEnemy(startX,startY));  //10%重装
         } else {
-            enemies.append(new FastEnemy(startX,startY));   //5%快速
+            enemies.append(new VanguardEnemy(startX,startY));   //10%先锋
         }
     }
 
@@ -150,11 +187,11 @@ void MainWindow::updateGame()
             //取一个大概的碰撞范围(40x40)
             QRectF enemyRect(enemies[j]->x,enemies[j]->y,40,40); 
             if(bulletRect.intersects(enemyRect)){
-                enemies[j]->hp -= 1; //每发子弹只扣1点血
+                enemies[j]->hp -= 1;
                 hit=true;
                 
                 if(enemies[j]->hp<=0){
-                    score += enemies[j]->scoreValue; //【新增】击杀加分
+                    score += enemies[j]->scoreValue;
                     delete enemies[j]; 
                     enemies.removeAt(j); 
                 }
@@ -268,8 +305,8 @@ void MainWindow::spawnBlockGroup()
     BlockColor mainColor=static_cast<BlockColor>(QRandomGenerator::global()->bounded(4));
     //使用Lambda表达式来方便地获取颜色
     auto getColor=[&]()->BlockColor{
-        if(isSameColor) return mainColor; //如果是同色策略,直接返回主颜色
-        //如果是随机色策略,每个方块独立随机生成一种颜色
+        if(isSameColor) return mainColor; //同色直接返回主颜色
+        //随机色独立随机生成一种颜色
         return static_cast<BlockColor>(QRandomGenerator::global()->bounded(4));
     };
     if(shapeRand<25){
@@ -324,7 +361,41 @@ void MainWindow::spawnBlockGroup()
 //鼠标按下事件
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
-    if(isGameOver) return;
+    // 1. 如果在主菜单界面
+    if(isMenu) {
+        if(event->button() == Qt::LeftButton) {
+            QRect startRect(width()/2 - 100, height()/2, 200, 60);
+            QRect exitRect(width()/2 - 100, height()/2 + 100, 200, 60);
+            
+            if(startRect.contains(event->pos())) {
+                isMenu = false;
+                resetGame();
+            } else if(exitRect.contains(event->pos())) {
+                close();
+            }
+        }
+        return;
+    }
+
+    // 2. 如果游戏结束，点击左键重新开始
+    if(isGameOver) {
+        if(event->button() == Qt::LeftButton) {
+            resetGame();
+        }
+        return;
+    }
+
+    // 3. 如果游戏暂停，只允许点击恢复按钮
+    if(isPaused) {
+        QRect pauseRect(width()/2 - 60, height() - 50, 120, 40);
+        if(event->button() == Qt::LeftButton && pauseRect.contains(event->pos())) {
+            isPaused = false;
+            update();
+        }
+        return;
+    }
+
+    // 4. 正常游戏中的点击逻辑
 
     //暂停按钮
     QRect pauseRect(width()/2 - 60, height() - 50, 120, 40);
@@ -519,6 +590,43 @@ void MainWindow::paintEvent(QPaintEvent *event)
     mainFont.setBold(true);
     painter.setFont(mainFont);
 
+    // 如果在主菜单界面，只绘制主菜单
+    if(isMenu) {
+        QFont titleFont = mainFont;
+        titleFont.setPointSize(60);
+        titleFont.setBold(true);
+        painter.setFont(titleFont);
+        painter.setPen(QColor(50, 100, 200));
+        painter.drawText(QRect(0, height()/4, width(), 100), Qt::AlignCenter, "POPUCOM");
+
+        QRect startRect(width()/2 - 100, height()/2, 200, 60);
+        QRect exitRect(width()/2 - 100, height()/2 + 100, 200, 60);
+
+        painter.setBrush(QColor(100, 200, 100));
+        painter.setPen(QPen(Qt::black, 2));
+        painter.drawRoundedRect(startRect, 10, 10);
+        
+        painter.setBrush(QColor(200, 100, 100));
+        painter.drawRoundedRect(exitRect, 10, 10);
+
+        QFont btnFont = mainFont;
+        btnFont.setPointSize(20);
+        painter.setFont(btnFont);
+        painter.setPen(Qt::white);
+        painter.drawText(startRect, Qt::AlignCenter, "开始游戏");
+        painter.drawText(exitRect, Qt::AlignCenter, "退出游戏");
+
+        // 绘制玩法说明简述
+        QFont helpFont = mainFont;
+        helpFont.setPointSize(12);
+        painter.setFont(helpFont);
+        painter.setPen(QColor(100, 100, 100));
+        QString helpText = "玩法说明：\n1. 左键拖拽传送带上的方块\n2. 点击右键旋转方块\n3. 消除方块会发射子弹攻击怪物\n4. 灵活使用左侧道具防守";
+        painter.drawText(QRect(0, height()/2 + 200, width(), 150), Qt::AlignCenter, helpText);
+        
+        return;
+    }
+
     //2.绘制上方传送带区域
     painter.fillRect(0,0,width(),topBeltHeight,QColor(220,240,235));
     painter.setPen(QPen(QColor(100,100,100),2));
@@ -562,7 +670,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     //4.绘制右侧计分板与时间区边框
     painter.setPen(QPen(QColor(80,80,80),2,Qt::DashLine));
-    painter.setBrush(QColor(235,225,205)); //【修改】使用与左侧相同的背景色
+    painter.setBrush(QColor(235,225,205));
     painter.drawRoundedRect(width()-sidePanelWidth+20,topBeltHeight+50,sidePanelWidth-40,height()-topBeltHeight-100,10,10);
     
     //设置面板标题的大号字体
@@ -571,9 +679,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.drawText(QRect(width()-sidePanelWidth+20,topBeltHeight+60,sidePanelWidth-40,40),Qt::AlignCenter,"status");
 
     //绘制分数
+    painter.setFont(panelFont);
     painter.setPen(QColor(50, 100, 200));
     painter.drawText(QRect(width()-sidePanelWidth+20, topBeltHeight+130, sidePanelWidth-40, 50), Qt::AlignCenter, QString("score"));
-    painter.setFont(mainFont);
+    painter.setFont(panelFont);
     painter.setPen(QColor(50, 50, 50));
     painter.drawText(QRect(width()-sidePanelWidth+20, topBeltHeight+180, sidePanelWidth-40, 50), Qt::AlignCenter, QString::number(score));
 
@@ -583,7 +692,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.drawText(QRect(width()-sidePanelWidth+20, topBeltHeight+280, sidePanelWidth-40, 50), Qt::AlignCenter, QString("survive"));
     int min = gameTime / 60;
     int sec = gameTime % 60;
-    painter.setFont(mainFont);
+    painter.setFont(panelFont);
     painter.setPen(Qt::black);
     painter.drawText(QRect(width()-sidePanelWidth+20, topBeltHeight+330, sidePanelWidth-40, 50), Qt::AlignCenter, QString("%1:%2").arg(min, 2, 10, QChar('0')).arg(sec, 2, 10, QChar('0')));
     mainFont.setPointSize(9);
@@ -596,7 +705,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.setPen(QPen(Qt::black, 2));
     painter.drawRoundedRect(pauseRect, 5, 5);
     painter.setPen(Qt::white);
-    painter.drawText(pauseRect, Qt::AlignCenter, isPaused ? "▶ 继续 (RESUME)" : "⏸ 暂停 (PAUSE)");
+    painter.drawText(pauseRect, Qt::AlignCenter, isPaused ? "▶ 继续 RESUME" : "⏸ 暂停 PAUSE");
 
     //5.绘制中间核心区域
     painter.setPen(QPen(QColor(50,50,50),3));
@@ -681,18 +790,27 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
     }
 
-    //绘制子弹
+    //绘制子弹 (带拖尾特效)
     for(const Bullet &bullet:bullets){
         QColor fillColor;
         switch(bullet.color){
-        case Color_Red: fillColor=QColor(250,100,100); break;
-        case Color_Yellow: fillColor=QColor(250,220,100); break;
-        case Color_Blue: fillColor=QColor(100,150,250); break;
-        case Color_Green: fillColor=QColor(100,200,100); break;
+            case Color_Red: fillColor=QColor(250,100,100); break;
+            case Color_Yellow: fillColor=QColor(250,220,100); break;
+            case Color_Blue: fillColor=QColor(100,150,250); break;
+            case Color_Green: fillColor=QColor(100,200,100); break;
         }
         painter.setBrush(fillColor);
         painter.setPen(Qt::NoPen);
-        painter.drawEllipse(bullet.x,bullet.y,15,15); //子弹是一个15x15的圆形
+        painter.drawEllipse(bullet.x,bullet.y,15,15); // 子弹头部
+        
+        // 绘制渐变拖尾
+        QLinearGradient gradient(bullet.x, bullet.y + 7.5, bullet.x - 30, bullet.y + 7.5);
+        gradient.setColorAt(0, fillColor);
+        QColor tailColor = fillColor;
+        tailColor.setAlpha(0);
+        gradient.setColorAt(1, tailColor);
+        painter.setBrush(gradient);
+        painter.drawRect(bullet.x - 30, bullet.y + 3, 30, 9);
     }
 
     //绘制敌人(直接调用虚函数)
@@ -724,7 +842,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
         }
     }
 
-    //如果游戏结束，在屏幕中央绘制半透明黑色遮罩和白色失败文字
+    //7.如果游戏结束，在屏幕中央绘制半透明黑色遮罩和白色失败文字
     if(isGameOver){
         painter.fillRect(0, 0, width(), height(), QColor(0, 0, 0, 150));
         QFont overFont = mainFont;
@@ -733,5 +851,10 @@ void MainWindow::paintEvent(QPaintEvent *event)
         painter.setFont(overFont);
         painter.setPen(Qt::white);
         painter.drawText(QRect(0, 0, width(), height()), Qt::AlignCenter, "game over");
+        
+        QFont restartFont = mainFont;
+        restartFont.setPointSize(20);
+        painter.setFont(restartFont);
+        painter.drawText(QRect(0, height()/2 + 100, width(), 50), Qt::AlignCenter, "- 点击鼠标左键重新开始 -");
     }
 }

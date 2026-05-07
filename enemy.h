@@ -26,31 +26,31 @@ public:
     virtual void draw(QPainter &painter) = 0;
 };
 
-//1.普通敌人:移速中等(0.25),血量为1
+//1.普通敌人:移速中等偏慢(0.20),血量为1,得分1
 class NormalEnemy : public Enemy {
 public:
-    NormalEnemy(double startX,double startY) : Enemy(startX,startY,1,0.25,1) {}
+    NormalEnemy(double startX,double startY) : Enemy(startX,startY,1,0.20,1) {}
     void draw(QPainter &painter) override;
 };
 
-//2.重装敌人:移速最慢(0.15),血量为3
-class HeavyEnemy : public Enemy {
-public:
-    HeavyEnemy(double startX,double startY) : Enemy(startX,startY,3,0.15,2) {}
-    void draw(QPainter &painter) override;
-};
-
-//3.快速敌人:移速较快(0.5),血量为1
-class FastEnemy : public Enemy {
-public:
-    FastEnemy(double startX,double startY) : Enemy(startX,startY,1,0.5,2) {}
-    void draw(QPainter &painter) override;
-};
-
-//4.精英敌人:移速中等(0.25),血量为2
+//2.精英敌人:移速中等偏快(0.35),血量为2,得分2
 class EliteEnemy : public Enemy {
 public:
-    EliteEnemy(double startX,double startY) : Enemy(startX,startY,2,0.25,2) {}
+    EliteEnemy(double startX,double startY) : Enemy(startX,startY,2,0.35,2) {}
+    void draw(QPainter &painter) override;
+};
+
+//3.重装敌人:移速缓慢(0.10),血量为3,得分2
+class HeavyEnemy : public Enemy {
+public:
+    HeavyEnemy(double startX,double startY) : Enemy(startX,startY,3,0.10,2) {}
+    void draw(QPainter &painter) override;
+};
+
+//4.先锋敌人(原快速敌人):移速快(0.50),血量为1,得分2
+class VanguardEnemy : public Enemy {
+public:
+    VanguardEnemy(double startX,double startY) : Enemy(startX,startY,1,0.50,2) {}
     void draw(QPainter &painter) override;
 };
 
