@@ -29,12 +29,12 @@ public:
     }
     virtual ~Enemy() {}
 
-    //虚函数:移动
+    //移动
     virtual void move() {
         x-=speed;
     }
 
-    //虚函数:绘制贴图(若无贴图则绘制默认后备方块)
+    //绘制贴图(若无贴图则绘制默认后备方块)
     virtual void draw(QPainter &painter) {
         if(!pixmap.isNull()) {
             // 如果成功加载了贴图，直接绘制贴图

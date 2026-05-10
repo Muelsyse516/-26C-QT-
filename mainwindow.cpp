@@ -128,7 +128,7 @@ void MainWindow::updateGame()
         gameTime++; // 存活秒数+1
     }
 
-    //1.让传送带上的方块组整体向右移动
+    //让传送带上的方块组整体向右移动
     for(int i=0;i<conveyorBlocks.size();++i){
         conveyorBlocks[i].x+=2.0; 
     }
@@ -137,19 +137,19 @@ void MainWindow::updateGame()
         originalDragX+=2.0; //同步加速
     }
 
-    //2.移除已经完全离开屏幕右侧的方块组
+    //移除已经完全离开屏幕右侧的方块组
     if(!conveyorBlocks.isEmpty()&&conveyorBlocks.first().x>width()+200){
         conveyorBlocks.removeFirst();
     }
 
-    //3.控制生成频率
+    //控制生成频率
     spawnTimer++;
     if(spawnTimer>=120){
         spawnBlockGroup();
         spawnTimer=0;
     }
 
-    //4.处理子弹移动与出界移除
+    //处理子弹移动与出界移除
     for(int i=0;i<bullets.size();++i){
         bullets[i].x+=8.0; 
     }
@@ -159,11 +159,11 @@ void MainWindow::updateGame()
         }
     }
 
-    //5.处理敌人移动与生成
+    //处理敌人移动与生成
     for(int i=0;i<enemies.size();++i){
         enemies[i]->move();
     }
-    //6.游戏失败
+    //游戏失败
     for(int i=enemies.size()-1;i>=0;--i){
         if(enemies[i]->x <= battleAreaStartX){
             isGameOver = true; // 游戏结束
@@ -172,9 +172,9 @@ void MainWindow::updateGame()
         }
     }
     
-    //7.怪物生成逻辑: 修改概率与修复Y坐标生成位置
+    //怪物生成逻辑: 修改概率与修复Y坐标生成位置
     enemySpawnTimer++;
-    if(enemySpawnTimer>187){ // 187 * 16ms ≈ 3000ms，即每隔约3秒生成一个敌人
+    if(enemySpawnTimer>150){ //每隔约2.5秒生成一个敌人
         enemySpawnTimer=0;
         //随机在0到5行之间生成
         int spawnRow=QRandomGenerator::global()->bounded(gridRows);
@@ -195,7 +195,7 @@ void MainWindow::updateGame()
         }
     }
 
-    //8.处理子弹与敌人的碰撞检测
+    //处理子弹与敌人的碰撞检测
     for(int i=bullets.size()-1;i>=0;--i){
         bool hit=false;
         for(int j=enemies.size()-1;j>=0;--j){
@@ -222,7 +222,7 @@ void MainWindow::updateGame()
     update();
 }
 
-//9.检测并处理同色直线三消
+//检测并处理同色直线三消
 void MainWindow::checkMatch()
 {
     //使用一个二维布尔数组记录哪些方块将被消除

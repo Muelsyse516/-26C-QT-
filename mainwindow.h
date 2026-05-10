@@ -34,7 +34,7 @@ protected:
 private:
     Ui::MainWindow *ui;
 
-    //场景相关常量
+    //场景常量
     const int windowWidth = 1280;
     const int windowHeight = 720;
     const int cellSize = 60; //单个方格的边长
@@ -75,7 +75,7 @@ private:
     int frameCount; //用于计时的帧计数器
     bool isGameOver; //游戏是否结束标志
     bool isPaused;   //是否暂停
-    bool isMenu;     //是否在主菜单界面
+    bool isMenu;     //是否在主菜单
 
     //道具与系统控制
     bool isDraggingSkill;

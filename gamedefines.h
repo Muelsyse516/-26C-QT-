@@ -8,8 +8,8 @@ enum BlockColor { Color_Red, Color_Yellow, Color_Blue, Color_Green };
 
 //定义单个小方块
 struct Block {
-    int rx; //在方块组内的相对X网格坐标
-    int ry; //在方块组内的相对Y网格坐标
+    int rx;
+    int ry;
     BlockColor color; //颜色
 };
 
