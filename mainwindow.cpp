@@ -2,6 +2,7 @@
 #include "./ui_mainwindow.h"
 #include <QRandomGenerator>
 #include <QMouseEvent>
+#include <QBitmap>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -42,6 +43,21 @@ MainWindow::MainWindow(QWidget *parent)
     hammerCooldown = 0;
     bombCooldown = 0;
     laserCooldown = 0;
+
+    //加载道具图片
+    if (hammerIcon.load("D:/Qtproject/popucom/images/hammer.jpg")) {
+        hammerIcon.setMask(hammerIcon.createMaskFromColor(Qt::white));
+    }
+    if (bombIcon.load("D:/Qtproject/popucom/images/bomb.jpg")) {
+        bombIcon.setMask(bombIcon.createMaskFromColor(Qt::white));
+    }
+    if (laserIcon.load("D:/Qtproject/popucom/images/laser.jpg")) {
+        laserIcon.setMask(laserIcon.createMaskFromColor(Qt::white));
+    }
+
+    //加载背景图
+    menuBg.load("D:/Qtproject/popucom/images/menu_bg.jpg");
+    battleBg.load("D:/Qtproject/popucom/images/battle_bg.jpg");
 
     gameTimer=new QTimer(this);
     //将定时器的超时信号连接到updateGame函数
@@ -158,7 +174,7 @@ void MainWindow::updateGame()
     
     //7.怪物生成逻辑: 修改概率与修复Y坐标生成位置
     enemySpawnTimer++;
-    if(enemySpawnTimer>150){ //每隔约2.5秒生成一个敌人
+    if(enemySpawnTimer>187){ // 187 * 16ms ≈ 3000ms，即每隔约3秒生成一个敌人
         enemySpawnTimer=0;
         //随机在0到5行之间生成
         int spawnRow=QRandomGenerator::global()->bounded(gridRows);
@@ -406,26 +422,26 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
     if(isPaused) return; // 暂停时禁止其他操作
     //道具按钮
-    QRect hammerRect(40, topBeltHeight + 100, sidePanelWidth - 80, 45);
-    QRect bombRect(40, topBeltHeight + 160, sidePanelWidth - 80, 45);
-    QRect laserRect(40, topBeltHeight + 220, sidePanelWidth - 80, 45);
+    QRect hammerRect(55, topBeltHeight + 110, 90, 90);
+    QRect bombRect(55, topBeltHeight + 240, 90, 90);
+    QRect laserRect(55, topBeltHeight + 370, 90, 90);
 
     if(event->button() == Qt::LeftButton) {
-        if(hammerRect.contains(event->pos()) && hammerCooldown <= 0) {
+        if(hammerRect.contains(event->pos()) && hammerCooldown <= 0 && score >= 3) {
             isDraggingSkill = true;
             draggedSkill = Skill_Hammer;
             skillDragPos = event->pos();
             update();
             return;
         }
-        if(bombRect.contains(event->pos()) && bombCooldown <= 0) {
+        if(bombRect.contains(event->pos()) && bombCooldown <= 0 && score >= 10) {
             isDraggingSkill = true;
             draggedSkill = Skill_Bomb;
             skillDragPos = event->pos();
             update();
             return;
         }
-        if(laserRect.contains(event->pos()) && laserCooldown <= 0) {
+        if(laserRect.contains(event->pos()) && laserCooldown <= 0 && score >= 20) {
             isDraggingSkill = true;
             draggedSkill = Skill_Laser;
             skillDragPos = event->pos();
@@ -508,7 +524,8 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
             if(draggedSkill == Skill_Hammer) {
                 if(battleGrid[r][c] != -1) { // 只能锤有方块的格子
                     battleGrid[r][c] = -1;
-                    hammerCooldown = 10 * 62; // 10s冷却
+                    hammerCooldown = 5 * 62; // 5s冷却
+                    score -= 3;
                 }
             } else if(draggedSkill == Skill_Bomb) {
                 for(int i = r - 1; i <= r + 1; ++i) {
@@ -518,7 +535,8 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
                         }
                     }
                 }
-                bombCooldown = 20 * 62; // 20s冷却
+                bombCooldown = 12 * 62; // 12s冷却
+                score -= 10;
             } else if(draggedSkill == Skill_Laser) {
                 for(int j = 0; j < gridCols; ++j) {
                     battleGrid[r][j] = -1;
@@ -531,6 +549,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
                     }
                 }
                 laserCooldown = 30 * 62; // 30s冷却
+                score -= 20;
             }
         }
         draggedSkill = Skill_None;
@@ -582,8 +601,20 @@ void MainWindow::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    //1.绘制全局背景底色
-    painter.fillRect(0,0,width(),height(),QColor(245,235,215));
+    //1.绘制全局背景底色或图片
+    if(isMenu) {
+        if(!menuBg.isNull()) {
+            painter.drawPixmap(0, 0, width(), height(), menuBg);
+        } else {
+            painter.fillRect(0,0,width(),height(),QColor(245,235,215));
+        }
+    } else {
+        if(!battleBg.isNull()) {
+            painter.drawPixmap(0, 0, width(), height(), battleBg);
+        } else {
+            painter.fillRect(0,0,width(),height(),QColor(245,235,215));
+        }
+    }
 
     QFont mainFont = painter.font();
     mainFont.setPointSize(10);
@@ -592,13 +623,6 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     // 如果在主菜单界面，只绘制主菜单
     if(isMenu) {
-        QFont titleFont = mainFont;
-        titleFont.setPointSize(60);
-        titleFont.setBold(true);
-        painter.setFont(titleFont);
-        painter.setPen(QColor(50, 100, 200));
-        painter.drawText(QRect(0, height()/4, width(), 100), Qt::AlignCenter, "POPUCOM");
-
         QRect startRect(width()/2 - 100, height()/2, 200, 60);
         QRect exitRect(width()/2 - 100, height()/2 + 100, 200, 60);
 
@@ -628,13 +652,13 @@ void MainWindow::paintEvent(QPaintEvent *event)
     }
 
     //2.绘制上方传送带区域
-    painter.fillRect(0,0,width(),topBeltHeight,QColor(220,240,235));
+    painter.fillRect(0,0,width(),topBeltHeight,QColor(220,240,235, 180));
     painter.setPen(QPen(QColor(100,100,100),2));
     painter.drawLine(0,topBeltHeight,width(),topBeltHeight);
 
     //3.绘制左侧道具区边框
     painter.setPen(QPen(QColor(80,80,80),2,Qt::DashLine));
-    painter.setBrush(QColor(235,225,205));
+    painter.setBrush(QColor(235,225,205, 180));
     painter.drawRoundedRect(20,topBeltHeight+50,sidePanelWidth-40,height()-topBeltHeight-100,10,10);
 
     QFont panelFont = mainFont;
@@ -645,32 +669,53 @@ void MainWindow::paintEvent(QPaintEvent *event)
     painter.setFont(mainFont);
 
     //绘制锤子按钮
-    QRect hammerRect(40, topBeltHeight + 100, sidePanelWidth - 80, 45);
+    QRect hammerRect(55, topBeltHeight + 110, 90, 90);
     painter.setPen(QPen(Qt::black, 2));
-    painter.setBrush(hammerCooldown > 0 ? QColor(180,180,180) : QColor(200,150,100));
+    painter.setBrush(hammerCooldown > 0 || score < 3 ? QColor(180,180,180) : QColor(200,150,100));
     painter.drawRoundedRect(hammerRect, 8, 8);
-    painter.setPen(Qt::white);
-    painter.drawText(hammerRect, Qt::AlignCenter, hammerCooldown > 0 ? QString("锤子冷却: %1s").arg(hammerCooldown/62 + 1) : "🔨 锤子(单体)");
+    if (!hammerIcon.isNull()) {
+        painter.drawPixmap(hammerRect, hammerIcon);
+    }
+    if (hammerCooldown > 0 || score < 3) {
+        painter.setBrush(QColor(0, 0, 0, 128));
+        painter.drawRoundedRect(hammerRect, 8, 8);
+    }
+    painter.setPen(Qt::black);
+    painter.drawText(QRect(20, hammerRect.bottom(), sidePanelWidth - 40, 25), Qt::AlignCenter, hammerCooldown > 0 ? QString("冷却: %1s").arg(hammerCooldown/62 + 1) : "花费: 3");
 
     //绘制炸弹按钮
-    QRect bombRect(40, topBeltHeight + 160, sidePanelWidth - 80, 45);
+    QRect bombRect(55, topBeltHeight + 240, 90, 90);
     painter.setPen(QPen(Qt::black, 2));
-    painter.setBrush(bombCooldown > 0 ? QColor(180,180,180) : QColor(250,100,100));
+    painter.setBrush(bombCooldown > 0 || score < 10 ? QColor(180,180,180) : QColor(250,100,100));
     painter.drawRoundedRect(bombRect, 8, 8);
-    painter.setPen(Qt::white);
-    painter.drawText(bombRect, Qt::AlignCenter, bombCooldown > 0 ? QString("炸弹冷却: %1s").arg(bombCooldown/62 + 1) : "💣 炸弹(3x3)");
+    if (!bombIcon.isNull()) {
+        painter.drawPixmap(bombRect, bombIcon);
+    }
+    if (bombCooldown > 0 || score < 10) {
+        painter.setBrush(QColor(0, 0, 0, 128));
+        painter.drawRoundedRect(bombRect, 8, 8);
+    }
+    painter.setPen(Qt::black);
+    painter.drawText(QRect(20, bombRect.bottom(), sidePanelWidth - 40, 25), Qt::AlignCenter, bombCooldown > 0 ? QString("冷却: %1s").arg(bombCooldown/62 + 1) : "花费: 10");
 
     //绘制激光按钮
-    QRect laserRect(40, topBeltHeight + 220, sidePanelWidth - 80, 45);
+    QRect laserRect(55, topBeltHeight + 370, 90, 90);
     painter.setPen(QPen(Qt::black, 2));
-    painter.setBrush(laserCooldown > 0 ? QColor(180,180,180) : QColor(100,150,250));
+    painter.setBrush(laserCooldown > 0 || score < 20 ? QColor(180,180,180) : QColor(100,150,250));
     painter.drawRoundedRect(laserRect, 8, 8);
-    painter.setPen(Qt::white);
-    painter.drawText(laserRect, Qt::AlignCenter, laserCooldown > 0 ? QString("激光冷却: %1s").arg(laserCooldown/62 + 1) : "⚡ 激光(一行)");
+    if (!laserIcon.isNull()) {
+        painter.drawPixmap(laserRect, laserIcon);
+    }
+    if (laserCooldown > 0 || score < 20) {
+        painter.setBrush(QColor(0, 0, 0, 128));
+        painter.drawRoundedRect(laserRect, 8, 8);
+    }
+    painter.setPen(Qt::black);
+    painter.drawText(QRect(20, laserRect.bottom(), sidePanelWidth - 40, 25), Qt::AlignCenter, laserCooldown > 0 ? QString("冷却: %1s").arg(laserCooldown/62 + 1) : "花费: 20");
 
     //4.绘制右侧计分板与时间区边框
     painter.setPen(QPen(QColor(80,80,80),2,Qt::DashLine));
-    painter.setBrush(QColor(235,225,205));
+    painter.setBrush(QColor(235,225,205, 180));
     painter.drawRoundedRect(width()-sidePanelWidth+20,topBeltHeight+50,sidePanelWidth-40,height()-topBeltHeight-100,10,10);
     
     //设置面板标题的大号字体
@@ -709,7 +754,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     //5.绘制中间核心区域
     painter.setPen(QPen(QColor(50,50,50),3));
-    painter.setBrush(QColor(250,245,230));
+    painter.setBrush(QColor(250,245,230, 150));
     painter.drawRect(battleAreaStartX,battleAreaStartY,gridCols*cellSize,gridRows*cellSize);
     //绘制内部网格线
     painter.setPen(QPen(QColor(200,200,200),1));
@@ -820,37 +865,43 @@ void MainWindow::paintEvent(QPaintEvent *event)
 
     //绘制正在拖拽的道具
     if(isDraggingSkill && draggedSkill != Skill_None) {
-        QRect dragRect(skillDragPos.x() - 20, skillDragPos.y() - 20, 40, 40);
+        QRect dragRect(skillDragPos.x() - 45, skillDragPos.y() - 45, 90, 90);
         if(draggedSkill == Skill_Hammer) {
             painter.setBrush(QColor(200,150,100));
             painter.setPen(QPen(Qt::black, 2));
             painter.drawRoundedRect(dragRect, 5, 5);
-            painter.setPen(Qt::white);
-            painter.drawText(dragRect, Qt::AlignCenter, "🔨");
+            if(!hammerIcon.isNull()) painter.drawPixmap(dragRect, hammerIcon);
+            else { painter.setPen(Qt::white); painter.drawText(dragRect, Qt::AlignCenter, "🔨"); }
         } else if(draggedSkill == Skill_Bomb) {
             painter.setBrush(QColor(250,100,100));
             painter.setPen(QPen(Qt::black, 2));
             painter.drawRoundedRect(dragRect, 5, 5);
-            painter.setPen(Qt::white);
-            painter.drawText(dragRect, Qt::AlignCenter, "💣");
+            if(!bombIcon.isNull()) painter.drawPixmap(dragRect, bombIcon);
+            else { painter.setPen(Qt::white); painter.drawText(dragRect, Qt::AlignCenter, "💣"); }
         } else if(draggedSkill == Skill_Laser) {
             painter.setBrush(QColor(100,150,250));
             painter.setPen(QPen(Qt::black, 2));
             painter.drawRoundedRect(dragRect, 5, 5);
-            painter.setPen(Qt::white);
-            painter.drawText(dragRect, Qt::AlignCenter, "⚡");
+            if(!laserIcon.isNull()) painter.drawPixmap(dragRect, laserIcon);
+            else { painter.setPen(Qt::white); painter.drawText(dragRect, Qt::AlignCenter, "⚡"); }
         }
     }
 
     //7.如果游戏结束，在屏幕中央绘制半透明黑色遮罩和白色失败文字
     if(isGameOver){
         painter.fillRect(0, 0, width(), height(), QColor(0, 0, 0, 150));
+        
         QFont overFont = mainFont;
         overFont.setPointSize(40);
         overFont.setBold(true);
         painter.setFont(overFont);
         painter.setPen(Qt::white);
-        painter.drawText(QRect(0, 0, width(), height()), Qt::AlignCenter, "game over");
+        painter.drawText(QRect(0, height()/2 - 150, width(), 100), Qt::AlignCenter, "game over");
+        
+        QFont scoreFont = mainFont;
+        scoreFont.setPointSize(30);
+        painter.setFont(scoreFont);
+        painter.drawText(QRect(0, height()/2 - 30, width(), 100), Qt::AlignCenter, QString("最终得分: %1").arg(score));
         
         QFont restartFont = mainFont;
         restartFont.setPointSize(20);

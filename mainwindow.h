@@ -85,6 +85,12 @@ private:
     int bombCooldown; //炸弹冷却
     int laserCooldown; //激光冷却
     ActiveSkill currentSkill;
+    QPixmap hammerIcon; //锤子图片
+    QPixmap bombIcon;   //炸弹图片
+    QPixmap laserIcon;  //激光图片
+    QPixmap menuBg;     //主菜单背景图
+    QPixmap battleBg;   //战斗背景图
+    
     //私有函数
     void updateGame(); //定时器触发的逻辑更新函数
     void spawnBlockGroup(); //生成新的方块组
