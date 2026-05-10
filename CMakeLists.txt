@@ -17,7 +17,6 @@ set(PROJECT_SOURCES
         mainwindow.cpp
         mainwindow.h
         mainwindow.ui
-        enemy.cpp
         enemy.h
         gamedefines.h
 )

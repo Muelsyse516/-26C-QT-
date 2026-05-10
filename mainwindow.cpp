@@ -681,7 +681,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
         painter.drawRoundedRect(hammerRect, 8, 8);
     }
     painter.setPen(Qt::black);
-    painter.drawText(QRect(20, hammerRect.bottom(), sidePanelWidth - 40, 25), Qt::AlignCenter, hammerCooldown > 0 ? QString("冷却: %1s").arg(hammerCooldown/62 + 1) : "花费: 3");
+    painter.drawText(QRect(20, hammerRect.bottom(), sidePanelWidth - 40, 25), Qt::AlignCenter, hammerCooldown > 0 ? QString("冷却: %1s").arg(hammerCooldown/62 + 1) : "cost 3");
 
     //绘制炸弹按钮
     QRect bombRect(55, topBeltHeight + 240, 90, 90);
@@ -696,7 +696,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
         painter.drawRoundedRect(bombRect, 8, 8);
     }
     painter.setPen(Qt::black);
-    painter.drawText(QRect(20, bombRect.bottom(), sidePanelWidth - 40, 25), Qt::AlignCenter, bombCooldown > 0 ? QString("冷却: %1s").arg(bombCooldown/62 + 1) : "花费: 10");
+    painter.drawText(QRect(20, bombRect.bottom(), sidePanelWidth - 40, 25), Qt::AlignCenter, bombCooldown > 0 ? QString("冷却: %1s").arg(bombCooldown/62 + 1) : "cost 10");
 
     //绘制激光按钮
     QRect laserRect(55, topBeltHeight + 370, 90, 90);
@@ -711,7 +711,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
         painter.drawRoundedRect(laserRect, 8, 8);
     }
     painter.setPen(Qt::black);
-    painter.drawText(QRect(20, laserRect.bottom(), sidePanelWidth - 40, 25), Qt::AlignCenter, laserCooldown > 0 ? QString("冷却: %1s").arg(laserCooldown/62 + 1) : "花费: 20");
+    painter.drawText(QRect(20, laserRect.bottom(), sidePanelWidth - 40, 25), Qt::AlignCenter, laserCooldown > 0 ? QString("冷却: %1s").arg(laserCooldown/62 + 1) : "cost 20");
 
     //4.绘制右侧计分板与时间区边框
     painter.setPen(QPen(QColor(80,80,80),2,Qt::DashLine));
