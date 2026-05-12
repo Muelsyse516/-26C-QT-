@@ -21,9 +21,7 @@ public:
     Enemy(double startX,double startY,int h,double s,int score, const QString& imgPath) 
         : x(startX),y(startY),hp(h),maxHp(h),speed(s),scoreValue(score) 
     {
-        // 尝试加载贴图文件
         if (pixmap.load(imgPath)) {
-            // 自动将纯白色的背景设置为透明
             pixmap.setMask(pixmap.createMaskFromColor(Qt::white));
         }
     }
@@ -34,20 +32,19 @@ public:
         x-=speed;
     }
 
-    //绘制贴图(若无贴图则绘制默认后备方块)
+    //绘制贴图
     virtual void draw(QPainter &painter) {
         if(!pixmap.isNull()) {
-            // 如果成功加载了贴图，直接绘制贴图
+
             painter.drawPixmap(x, y, 40, 40, pixmap);
         } else {
-            // 没有贴图时的后备显示(带问号的灰色方块)
             painter.setBrush(Qt::gray);
             painter.setPen(QPen(Qt::black, 2));
             painter.drawRect(x, y, 40, 40);
             painter.setPen(Qt::white);
             painter.drawText(x + 5, y + 25, "IMG?");
         }
-        // 画血条(显示在下方)
+        // 画血条
         painter.setBrush(Qt::red);
         painter.setPen(Qt::NoPen);
         painter.drawRect(x, y + 45, 40 * hp / maxHp, 5);
